@@ -89,15 +89,9 @@ fs.readdir(config.commandsDir, (err, files) => {
 
 
 
-if (config.TOKEN || process.env.TOKEN) {
-  client.login(config.TOKEN || process.env.TOKEN).catch((e) => {
-    console.log('TOKEN ERROR❌❌');
-  });
-} else {
-  setTimeout(() => {
-    console.log('TOKEN ERROR❌❌');
-  }, 2000);
-}
+client.login(process.env.TOKEN).catch((e) => {
+  console.log('TOKEN ERROR❌❌', e);
+});
 
 
 if(config.mongodbURL || process.env.MONGO){
