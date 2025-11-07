@@ -1,56 +1,75 @@
+// index.js
+
 import { Client, GatewayIntentBits } from "discord.js";
 import { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus } from "@discordjs/voice";
-import ffmpeg from "ffmpeg-static";
-import play from "play-dl";
+import ytdl from "ytdl-core";
+import fs from "fs";
 
-await play.setToken({ 
-  youtubeCookies: "PREF=tz=America.New_York&f4=4000000&f6=40000000&f5=30000&f7=100; VISITOR_INFO1_LIVE=1F5dsnchCT0; VISITOR_PRIVACY_METADATA=CgJVUxIEGgAgUA%3D%3D; _gcl_au=1.1.5531112.1760034050; __Secure-YNID=13.YT=LtTRFVtsYM5Dn5jiSx1Sqx7QXhV2ik99mJRpamihq-0DqCI8QHzV2Xpp60-CgQ2fOpF45piLalhciKvNPb6Bv_rVNS91ubRxlb8M6I3HjJ_Gtb5FY8UlKl3QKgJDEmG_-VHBm29MW2zCQiu6KMwQDi8QQdjYHEErD7gNdubzFnt5_5TKRDY59aVlVT8L9n1DDxBdCunHNo-yMsStjsamSIiavw43oXQ6SpyA3SHjzgISb-StbUK4jwnw9-LQ-ZmkT1usuNVnNKgJ6BOm1Yf88Vuz7Y5C2Sql6LHERr3hdPQcoQjYJCrluUOrjdOABpIh3zbJCgmyemp8wOCXqgYieA; GPS=1; VISITOR_INFO1_LIVE=hlq2Yxkxqms; VISITOR_PRIVACY_METADATA=CgJVUxIEGgAgTA%3D%3D; YSC=4GXAzR_lRCc; __Secure-ROLLOUT_TOKEN=CMr68difhYKzwwEQlNXMn5i1jwMYtoHk_d7gkAM%3D" 
+// Keep bot alive
+setInterval(() => console.log("Bot is alive"), 5 * 60 * 1000);
+
+// Create Discord client
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.GuildVoiceStates,
+    GatewayIntentBits.MessageContent
+  ]
 });
 
+// Bot ready
+client.once("ready", () => {
+  console.log(`✅ Logged in as ${client.user.tag}`);
+});
 
-// Fixed test URL
-const TEST_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=RDdQw4w9WgXcQ&start_radio=1";
+// Handle messages
+client.on("messageCreate", async (message) => {
+  if (!message.content.startsWith("!play") || message.author.bot) return;
 
+  const args = message.content.split(" ");
+  const url = args[1];
+  if (!url) return message.reply("❌ Please provide a YouTube link, e.g. `!play <url>`");
 
-  const client = new Client({
-    intents: [
-      GatewayIntentBits.Guilds,
-      GatewayIntentBits.GuildMessages,
-      GatewayIntentBits.GuildVoiceStates,
-      GatewayIntentBits.MessageContent
-    ]
-  });
+  const voiceChannel = message.member?.voice?.channel;
+  if (!voiceChannel) return message.reply("❌ You need to be in a voice channel first!");
 
-  client.once("ready", () => console.log(`✅ Logged in as ${client.user.tag}`));
+  try {
+    // Download the audio to a temporary file
+    const stream = ytdl(url, { filter: "audioonly" });
+    const filePath = "./temp_song.mp3";
+    const fileStream = fs.createWriteStream(filePath);
 
-  client.on("messageCreate", async (message) => {
-    if (!message.content.startsWith("!play") || message.author.bot) return;
+    stream.pipe(fileStream);
 
-    const voiceChannel = message.member?.voice?.channel;
-    if (!voiceChannel) return message.reply("❌ You need to be in a voice channel first!");
-
-    try {
-      const stream = await play.stream(TEST_URL, { discordPlayerCompatibility: true });
-
+    fileStream.on("finish", () => {
+      // Join voice channel
       const connection = joinVoiceChannel({
         channelId: voiceChannel.id,
         guildId: voiceChannel.guild.id,
         adapterCreator: voiceChannel.guild.voiceAdapterCreator
       });
 
-      const resource = createAudioResource(stream.stream, { inputType: stream.type });
+      // Play the downloaded file
       const player = createAudioPlayer();
+      const resource = createAudioResource(filePath);
 
       player.play(resource);
       connection.subscribe(player);
 
-      player.on(AudioPlayerStatus.Idle, () => connection.destroy());
+      player.on(AudioPlayerStatus.Idle, () => {
+        connection.destroy();
+        fs.unlinkSync(filePath); // delete the temporary file
+      });
 
-      message.reply(`▶️ Now playing the test track!`);
-    } catch (err) {
-      console.error(err);
-      message.reply("⚠️ Failed to play the test track.");
-    }
-  });
+      message.reply(`▶️ Now playing: ${url}`);
+    });
 
-  client.login(process.env.TOKEN);
+  } catch (err) {
+    console.error(err);
+    message.reply("⚠️ Failed to download or play that link.");
+  }
+});
+
+// Login using token from environment variable
+client.login(process.env.TOKEN);
