@@ -1,14 +1,16 @@
 import { Client, GatewayIntentBits } from "discord.js";
 import { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus } from "@discordjs/voice";
-import play from "play-dl";
 import ffmpeg from "ffmpeg-static";
+import play from "play-dl";
+
+await play.setToken({ 
+  youtubeCookies: "PREF=tz=America.New_York&f4=4000000&f6=40000000&f5=30000&f7=100; VISITOR_INFO1_LIVE=1F5dsnchCT0; VISITOR_PRIVACY_METADATA=CgJVUxIEGgAgUA%3D%3D; _gcl_au=1.1.5531112.1760034050; __Secure-YNID=13.YT=LtTRFVtsYM5Dn5jiSx1Sqx7QXhV2ik99mJRpamihq-0DqCI8QHzV2Xpp60-CgQ2fOpF45piLalhciKvNPb6Bv_rVNS91ubRxlb8M6I3HjJ_Gtb5FY8UlKl3QKgJDEmG_-VHBm29MW2zCQiu6KMwQDi8QQdjYHEErD7gNdubzFnt5_5TKRDY59aVlVT8L9n1DDxBdCunHNo-yMsStjsamSIiavw43oXQ6SpyA3SHjzgISb-StbUK4jwnw9-LQ-ZmkT1usuNVnNKgJ6BOm1Yf88Vuz7Y5C2Sql6LHERr3hdPQcoQjYJCrluUOrjdOABpIh3zbJCgmyemp8wOCXqgYieA; GPS=1; VISITOR_INFO1_LIVE=hlq2Yxkxqms; VISITOR_PRIVACY_METADATA=CgJVUxIEGgAgTA%3D%3D; YSC=4GXAzR_lRCc; __Secure-ROLLOUT_TOKEN=CMr68difhYKzwwEQlNXMn5i1jwMYtoHk_d7gkAM%3D" 
+});
+
 
 // Fixed test URL
 const TEST_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=RDdQw4w9WgXcQ&start_radio=1";
 
-async function init() {
-  // Optional: YouTube login if needed
-  // await play.setToken({ youtubeCookies: "<paste cookies here>" });
 
   const client = new Client({
     intents: [
