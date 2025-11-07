@@ -3,7 +3,6 @@
 import { Client, GatewayIntentBits } from "discord.js";
 import { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus } from "@discordjs/voice";
 import play from "play-dl";
-import ffmpeg from "ffmpeg-static";
 
 // Keep bot alive on free-tier
 setInterval(() => console.log("Bot is alive"), 5 * 60 * 1000);
