@@ -1,11 +1,15 @@
 // index.js
 
+
 import { Client, GatewayIntentBits } from "discord.js";
 import { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus } from "@discordjs/voice";
 import play from "play-dl";
 
-// Keep bot alive on free-tier
+
+
 setInterval(() => console.log("Bot is alive"), 5 * 60 * 1000);
+
+
 
 // Create Discord client
 const client = new Client({
@@ -17,9 +21,6 @@ const client = new Client({
   ]
 });
 
-// Simple queue
-const queue = new Map();
-
 // Bot ready
 client.once("ready", () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
@@ -30,43 +31,14 @@ client.on("messageCreate", async (message) => {
   if (!message.content.startsWith("!play") || message.author.bot) return;
 
   const args = message.content.split(" ");
-  const url = args[1];
+  const url = "https://youtu.be/-BDJgp3t5qA";
   if (!url) return message.reply("❌ Please provide a YouTube link, e.g. `!play <url>`");
-
-  try {
-    new URL(url); // validate URL
-  } catch {
-    return message.reply("❌ Invalid URL.");
-  }
 
   const voiceChannel = message.member?.voice?.channel;
   if (!voiceChannel) return message.reply("❌ You need to be in a voice channel first!");
 
-  // Get guild queue or create new
-  let serverQueue = queue.get(message.guild.id);
-  if (!serverQueue) {
-    serverQueue = [];
-    queue.set(message.guild.id, serverQueue);
-  }
-  serverQueue.push(url);
-
-  // If nothing is playing, start
-  if (serverQueue.length === 1) {
-    playSong(message.guild.id, voiceChannel);
-  } else {
-    message.reply(`➕ Added to queue: ${url}`);
-  }
-});
-
-// Function to play the next song in queue
-async function playSong(guildId, voiceChannel) {
-  const serverQueue = queue.get(guildId);
-  if (!serverQueue || serverQueue.length === 0) return;
-
-  const url = serverQueue[0];
-
   try {
-    const stream = await play.stream(url, { discordPlayerCompatibility: true });
+    const stream = await play.stream(url);
 
     const connection = joinVoiceChannel({
       channelId: voiceChannel.id,
@@ -80,23 +52,17 @@ async function playSong(guildId, voiceChannel) {
     player.play(resource);
     connection.subscribe(player);
 
+    // Disconnect when done
     player.on(AudioPlayerStatus.Idle, () => {
-      serverQueue.shift(); // remove finished song
-      if (serverQueue.length > 0) {
-        playSong(guildId, voiceChannel);
-      } else {
-        connection.destroy();
-      }
+      connection.destroy();
     });
+
+    message.reply(`▶️ Now playing: ${url}`);
   } catch (err) {
     console.error(err);
-    voiceChannel.send("⚠️ Failed to play that link.");
-    serverQueue.shift();
-    if (serverQueue.length > 0) {
-      playSong(guildId, voiceChannel);
-    }
+    message.reply("⚠️ Failed to play that link.");
   }
-}
+});
 
 // Login using token from environment variable
 client.login(process.env.TOKEN);
