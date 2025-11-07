@@ -3,7 +3,10 @@ import { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerSt
 import ffmpeg from "ffmpeg-static";
 import play from "play-dl";
 
-await play.setToken({ youtubeCookies: "<paste cookies here>" });
+// Wrap everything in async init
+async function init() {
+  // Login to YouTube using cookies first
+  await play.setToken({ youtubeCookies: "<paste cookies here>" });
 
 // Keep bot alive on free-tier
 setInterval(() => console.log("Bot is alive"), 5 * 60 * 1000);
