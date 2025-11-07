@@ -54,6 +54,3 @@ const TEST_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=RDdQw4w9WgXcQ
   });
 
   client.login(process.env.TOKEN);
-}
-
-init();
